@@ -55,7 +55,7 @@ mongoose.connect(db_config.database)
 			next();
 		});
 
-		app.use(_jwt.jwtValidate({onunf: _jwt.v_onUnf_A}));
+		app.use(_jwt.jwtValidate({onhnd: _jwt.v_onHnd_A}));
 		app.use(rlog_mw);
 
 		app.get('/', (req, res, next) => {
