@@ -85,7 +85,7 @@ module.exports.jwtValidate = (options) => {
           middleware: 'jwtValidate'
         });
       }
-      User.findById(decoded.id, (err, found) => {
+      User.findById(decoded.id, {__v: 0, password: 0}, (err, found) => {
         if (err) {
           return _EUNEXP(res, err, {
             found: found,
