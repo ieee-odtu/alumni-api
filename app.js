@@ -9,6 +9,10 @@ import helmet from 'helmet';
 import db_config from './config/database';
 import server_config from './config/server';
 
+import _jwt from './middleware/jwt';
+
+import {rlog_mw} from './util';
+
 const package_json_parsed = JSON.parse(fs.readFileSync('package.json'));
 const API_NAME = package_json_parsed.name;
 const API_VER = package_json_parsed.version;
@@ -50,10 +54,8 @@ mongoose.connect(db_config.database)
 			next();
 		});
 
-		app.use((req, res, next) => {
-			console.log('[' + req.method + '] ' + req.baseUrl + req.path);
-			next();
-		});
+		app.use(_jwt.jwtValidate({onunf: _jwt.v_onUnf_A}));
+		app.use(rlog_mw);
 
 		app.get('/', (req, res, next) => {
 			return res.status(200).json({
