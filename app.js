@@ -40,7 +40,8 @@ mongoose.connect(db_config.database)
 			policy: 'same-origin'
 		}));
 
-		// Cors middlware for cross-origin resource sharing
+		// Cors middlware for cross-origin resource sharin
+		// TODO: This configuration of CORS is not safe
 		app.use(cors());
 
 		app.use(bodyParser.json());
@@ -72,6 +73,6 @@ mongoose.connect(db_config.database)
 
 		app.listen(_api_port, (err) => {
 			if (!err)
-				console.log(`Server started on port: ${_api_port}`);
+				console.log('[+] Server has started on port', _api_port);
 		});
 	});
