@@ -10,17 +10,7 @@ import {_EUNEXP, _E_CAST} from '../util';
 const _AUTH_TAB = ['admin', 'editor'];
 
 router.get('/', (req, res, next) => {
-  let filter_query;
-  if (req.user == _jwt.constants.U_UNREG || req.user.authorization == 'regular') {
-    filter_query = {_id: 0, __v: 0, contact: 0, 'contact.cwd': 1, 'contact.linkedin': 1, 'contact.country': 1};
-  } else if (_AUTH_TAB.includes(req.user.authorization)) {
-    filter_query = {_id: 0, __v: 0}
-  } else {
-    return _EUNEXP(res, 'Invalid authorization: ' + req.user.authorization, {
-      'req.user': req.user
-    });
-  }
-  Reg.find({}, filter_query, (err, regs) => {
+  Reg.find({}, {_id: 0, __v: 0}, (err, regs) => {
     if (err) return _EUNEXP(res, err, {
       regs: regs
     });
@@ -30,6 +20,9 @@ router.get('/', (req, res, next) => {
         code: 'R_NF'
       });
     } else {
+      if (req.user == _jwt.constants.U_UNREG || req.user.authorization == 'regular') {
+        regs = regs.select('-contact.phone -contact.email -contact.city');
+      }
       return res.status(200).json({
         success: true,
         registries: regs
@@ -64,17 +57,7 @@ router.post('/', _auth, (req, res, next) => {
 });
 
 router.get('/:rid', (req, res, next) => {
-  let filter_query;
-  if (req.user == _jwt.constants.U_UNREG || req.user.authorization == 'regular') {
-    filter_query = {_id: 0, __v: 0, contact: 0, 'contact.cwd': 1, 'contact.linkedin': 1, 'contact.country': 1};
-  } else if (_AUTH_TAB.includes(req.user.authorization)) {
-    filter_query = {_id: 0, __v: 0}
-  } else {
-    return _EUNEXP(res, 'Invalid authorization: ' + req.user.authorization, {
-      'req.user': req.user
-    });
-  }
-  Reg.findById(req.params.rid, filter_query, (err, found) => {
+  Reg.findById(req.params.rid, {_id: 0, __v: 0}, (err, found) => {
     if (err) {
       if (err.name == 'CastError') {
         return _E_CAST(res, err, 'R_NF', 404);
@@ -85,6 +68,9 @@ router.get('/:rid', (req, res, next) => {
       }
     }
     if (found) {
+      if (req.user == _jwt.constants.U_UNREG || req.user.authorization == 'regular') {
+        regs = regs.select('-contact.phone -contact.email -contact.city');
+      }
       return res.status(200).json({
         success: true,
         registry: found
