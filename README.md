@@ -5,7 +5,7 @@ RESTful API server for IEEE METU CS Alumni Project, running Express.js on Node.j
 ## Installation
 
 ```bash
-git clone https://ieee-odtu/alumni-api
+git clone https://github.com/ieee-odtu/alumni-api
 cd ./alumni-api
 npm install
 npm run dev
