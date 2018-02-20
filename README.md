@@ -16,8 +16,8 @@ npm run dev
 For a better development process, add the lines below right after line #240 in express/lib/response.js
 
 ```js
-val.debug = val.debug || {};
 if (['POST', 'PUT', 'PATCH'].includes(this.req.method)) {
+  val.debug = val.debug || {};
   val.debug.body = this.req.body;
 }
 ```
