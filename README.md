@@ -9,7 +9,7 @@ For a better development process, add the lines below right after line #240 in e
 ```js
 val.debug = val.debug || {};
 if (['POST', 'PUT', 'PATCH'].includes(this.req.method)) {
-  val.debug.body = val.debug.body || this.req.body;
+  val.debug.body = this.req.body;
 }
 ```
 
