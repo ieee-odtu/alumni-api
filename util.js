@@ -41,7 +41,7 @@ module.exports.rlog = (req) => {
     whois = req.user.username;
     ccode = User.ccodes[req.user.utype];
   }
-  console.log('[' + req.method + '] ' + req.baseUrl + req.path + ' <==> ' + ccode + whois + "\x1b[0m");
+  console.log('[' + req.method + '] ' + req.originalUrl + ' <==> ' + ccode + whois + "\x1b[0m");
 }
 
 module.exports.rlog_mw = (req, res, next) => {
@@ -53,6 +53,6 @@ module.exports.rlog_mw = (req, res, next) => {
     whois = req.user.username;
     ccode = User.ccodes[req.user.utype];
   }
-  console.log('[' + req.method + '] ' + req.baseUrl + req.path + ' <==> ' + ccode + whois + "\x1b[0m");
+  console.log('[' + req.method + '] ' + req.originalUrl + ' <==> ' + ccode + whois + "\x1b[0m");
   next();
 }
