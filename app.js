@@ -75,7 +75,7 @@ mongoose.connect(db_config.database)
 		app.use('/r', route_regs);
 		app.use('/auth', route_auth);
 
-		app.get('*', (req, res) => {
+		app.use('*', (req, res) => {
 			return res.status(404).end('Unimplemented or unknown API endpoint');
 		});
 
