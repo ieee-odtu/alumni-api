@@ -56,3 +56,7 @@ let RegistrySchema = mongoose.Schema({
 let Registry = mongoose.model('registry', RegistrySchema);
 
 module.exports = Registry;
+
+module.exports.getRegByName = function (name, callback) {
+  Registry.findOne({name: name}, callback);
+}

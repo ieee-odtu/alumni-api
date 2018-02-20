@@ -13,9 +13,23 @@ module.exports._EUNEXP = (res, err, debug, middleware) => {
     response['middleware'] = debug;
   } else if (typeof debug == 'object' && typeof middleware == 'string') {
     response['debug'] = debug;
-    reponse['middleware'] = middleware;
+    response['middleware'] = middleware;
   }
   return res.status(500).json(response);
+}
+
+module.exports._E_CAST = (res, err, code, status, debug, middleware) => {
+  let response = {
+    success: false,
+    code: code
+  }
+  if (typeof debug == 'string') {
+    response['middleware'] = debug;
+  } else if (typeof debug == 'object' && typeof middleware == 'string') {
+    response['debug'] = debug;
+    response['middleware'] = middleware;
+  }
+  return res.status(status).json(response);
 }
 
 module.exports.rlog = (req) => {

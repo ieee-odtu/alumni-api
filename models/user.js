@@ -38,6 +38,8 @@ module.exports.ccodes = {
   'regular': "\x1b[37m"
 }
 
+module.exports.UTYPES = USER_UTYPES;
+
 module.exports.addUser = function(_new_user, callback){
 	let new_user = new User(_new_user);
 	bcrypt.genSalt(10, (err, salt) => {
@@ -71,7 +73,7 @@ module.exports.registerEligible = function(_opts, callback){
 		if (found) return callback(_ecodes.REG_EMAIL, null);
 		User.findOne({username: _opts.username}, (err, found) => {
 			if (err) return callback(err, null);
-			if (found) return callback( _ecodes.REG_UNAME, null);
+			if (found) return callback(_ecodes.REG_UNAME, null);
 			return callback(null, true);
 		});
 	});
