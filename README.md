@@ -25,3 +25,7 @@ if (['POST', 'PUT', 'PATCH'].includes(this.req.method)) {
 <hr></hr>
 
 **This repository is part of IEEE METU CS Alumni Project and has been licensed under The MIT License.**
+
+Project Author: Ozan Sazak
+
+Contact: <ozan.sazak@protonmail.ch>
