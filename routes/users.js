@@ -5,161 +5,73 @@ import User from '../models/user';
 
 import _ecodes from '../config/ec';
 
-import {_EUNEXP, _E_CAST} from '../util';
+import {_EUNEXP, _SUCC, _FAIL, _CREATED, _REMOVED, asyncWrap} from '../util';
 
-router.get('/', _auth, (req, res, next) => {
-  User.find({}, {__v: 0, password: 0}, (err, users) => {
-    if (err) return _EUNEXP(res, err, {
+router.get('/', _auth, asyncWrap(async (req, res, next) => {
+  let users = await User.find({}, {__v: 0, password: 0})
+  if (users.length == 0) {
+    return _FAIL(res, 'U_NF');
+  } else {
+    return _SUCC(res, {
       users: users
     });
-    if (users.length == 0) {
-      return res.status(404).json({
-        success: false,
-        code: 'U_NF'
-      });
-    } else {
-      return res.status(200).json({
-        success: true,
-        users: users
-      });
-    }
-  });
-});
+  }
+}));
 
 // this api call is JUST for admin
 // users must use /u/register instead
-router.post('/', _auth, (req, res, next) => {
-  User.registerEligible({
+router.post('/', _auth, asyncWrap(async (req, res, next) => {
+  await User.registerEligible({
     email: req.body.user.email,
     username: req.body.user.username
-  }, (err, _ret) => {
-    if (err) {
-      switch (err) {
-        case _ecodes.REG_EMAIL:
-          return res.status(409).json({
-              success: false,
-              code: 'REG_EMAIL'
-          });
-          break;
-        case _ecodes.REG_UNAME:
-          return res.status(409).json({
-            success: false,
-            code: 'REG_UNAME'
-          });
-          break;
-        default:
-          return _EUNEXP(res, err);
-      }
-    } else {
-      if (!User.UTYPES.includes(req.body.user.utype)) {
-        return res.status(409).json({
-          success: false,
-          code: 'USER_WRONG_UTYPE',
-          debug: {
-            utype: req.body.user.utype
-          }
-        });
-      } else {
-        User.addUser(req.body.user, (err, created) => {
-          if (err) return _EUNEXP(res, err, {
-            created: created
-          });
-          return res.status(201).json({
-            success: true,
-            created: created
-          });
-        });
-      }
-    }
   });
-});
+  if (!User.UTYPES.includes(req.body.user.utype)) {
+    return _FAIL(res, 'USER_WRONG_UTYPE');
+  } else {
+    await User.createNew(req.body.user)
+    return _CREATED(res, 'User');
+  }
+}));
 
-router.get('/:uid', _auth, (req, res, next) => {
-  User.findById(req.params.uid, {__v: 0, password: 0}, (err, found) => {
-    if (err) {
-      if (err.name == 'CastError') {
-        return _E_CAST(res, err, 'U_NF', 404);
-      } else {
-        return _EUNEXP(res, err, {
-          found: found
-        });
-      }
-    }
-    if (found) {
-      return res.status(200).json({
-        success: true,
-        user: found
-      });
-    } else {
-      return res.status(404).json({
-        success: false,
-        code: 'U_NF'
-      });
-    }
-  });
-});
+router.get('/:uid', _auth, asyncWrap(async (req, res, next) => {
+  let found = await User.findById(req.params.uid, {__v: 0, password: 0})
+  if (found) {
+    return _SUCC(res, {
+      user: found
+    });
+  } else {
+    return _FAIL(res, 'U_NF');
+  }
+}));
 
-router.put('/:uid', _auth, (req, res, next) => {
-  User.update(req.params.uid, req.body.user, (err, updated) => {
-    if (err) return _EUNEXP(res, err, {
+router.put('/:uid', _auth, asyncWrap(async (req, res, next) => {
+    let updated = await User.update(req.params.uid, req.body.user)
+    return _CREATED(res, 'User', {
       updated: updated
     });
-    return res.status(201).json({
-      success: true,
-      updated: updated
-    });
-  });
-});
+}));
 
-router.delete('/:uid', _auth, (req, res, next) => {
-  User.remove({_id: req.params.uid}, (err, _ret) => {
-    if (err) return _EUNEXP(res, err);
-    return res.status(200).json({
-      success: true
-    });
-  });
-});
+router.delete('/:uid', _auth, asyncWrap(async (req, res, next) => {
+  await User.remove({_id: req.params.uid})
+  return _REMOVED(res, 'User');
+}));
 
 router.get('/profile', (req, res, next) => {
-  res.status(502).json({
+  res.status(501).json({
     success: false,
     msg: 'Unimplemented API endpoint'
   });
 });
 
-router.post('/register', (req, res, next) => {
-  User.registerEligible({
+router.post('/register', asyncWrap(async (req, res, next) => {
+  await User.registerEligible({
     email: req.body.user.email,
     username: req.body.user.username
-  }, (err, _ret) => {
-    if (err) {
-      switch (err) {
-        case _ecodes.REG_EMAIL:
-          return res.status(409).json({
-              success: false,
-              code: 'REG_EMAIL'
-          });
-          break;
-        case _ecodes.REG_UNAME:
-          return res.status(409).json({
-            success: false,
-            code: 'REG_UNAME'
-          });
-          break;
-        default:
-          return _EUNEXP(res, err);
-      }
-    } else {
-      req.body.user.utype = 'regular';
-      User.addUser(req.body.user, (err, created) => {
-        if (err) return _EUNEXP(res, err);
-        return res.status(201).json({
-          success: true
-        });
-      });
-    }
-  });
-});
+  })
+  req.body.user.utype = 'regular';
+  await User.addUser(req.body.user)
+  return _CREATED(res, 'User');
+}));
 
 function _auth(req, res, next) {
   if (req.user.authorization == 'admin') {

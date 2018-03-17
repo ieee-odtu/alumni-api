@@ -57,6 +57,11 @@ let Registry = mongoose.model('registry', RegistrySchema);
 
 module.exports = Registry;
 
+module.exports.createNew = async (new_reg) => {
+  let new_instance = new Registry(new_reg);
+  await new_instance.save();
+}
+
 module.exports.getRegByName = function (name, callback) {
   Registry.findOne({name: name}, callback);
 }

@@ -10,12 +10,13 @@ import db_config from './config/database';
 import server_config from './config/server';
 
 import _jwt from './middleware/jwt';
+import {vRF_multi} from './middleware/validate';
 
 import route_users from './routes/users';
 import route_regs from './routes/registries';
 import route_auth from './routes/auth';
 
-import {rlog_mw} from './util';
+import {rlog_mw, _EUNEXP} from './util';
 
 const package_json_parsed = JSON.parse(fs.readFileSync('package.json'));
 const API_NAME = package_json_parsed.name;
@@ -71,12 +72,38 @@ mongoose.connect(db_config.database)
 			});
 		});
 
+		// TODO: Implement this
+		//app.use(vRF_multi('all'));
+
 		app.use('/u', route_users);
 		app.use('/r', route_regs);
 		app.use('/auth', route_auth);
 
 		app.use('*', (req, res) => {
 			return res.status(404).end('Unimplemented or unknown API endpoint');
+		});
+
+		app.use((err, req, res, next) => {
+			console.error('\x1b[1m\x1b[31m[ERROR]', err.name + '\x1b[0m');
+			if (!res.headersSent) {
+				switch (err.name) {
+					case 'JsonWebTokenError':
+						res.status(401).json({
+							code: 'JV_ERR',
+							err: err,
+							middleware: 'jwtValidate'
+						});
+						break;
+					case 'CastError':
+						res.status(409).json({
+							code: 'INV_DATA',
+							err: err
+						});
+						break;
+					default:
+						_EUNEXP(res, err);
+				}
+			}
 		});
 
 		app.listen(_api_port, (err) => {

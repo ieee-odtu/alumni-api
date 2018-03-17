@@ -40,18 +40,14 @@ module.exports.ccodes = {
 
 module.exports.UTYPES = USER_UTYPES;
 
-module.exports.addUser = function(_new_user, callback){
+module.exports.createNew = async function(_new_user, callback){
 	let new_user = new User(_new_user);
-	bcrypt.genSalt(10, (err, salt) => {
-		if (err) return callback(err, null);
-		bcrypt.hash(new_user.password, salt, (err, hash) => {
-			if (err) return callback(err, null);
-			new_user.password = hash;
-			new_user.email = new_user.email.toLowerCase();
-			new_user.signup = new Date().toJSON();
-			new_user.save(callback);
-		});
-	});
+	let salt = await bcrypt.genSalt(10)
+	let hash = await bcrypt.hash(new_user.password, salt)
+	new_user.password = hash;
+	new_user.email = new_user.email.toLowerCase();
+	new_user.signup = new Date().toJSON();
+	await new_user.save();
 }
 
 module.exports.getUserByUsername = function(uname, callback){
@@ -67,29 +63,20 @@ module.exports.getUsersByUtype = function(utype, callback){
 	User.find({utype: utype}, callback);
 }
 
-module.exports.registerEligible = function(_opts, callback){
-	User.findOne({email: _opts.email}, (err, found) => {
-		if (err) return callback(err, null);
-		if (found) return callback(_ecodes.REG_EMAIL, null);
-		User.findOne({username: _opts.username}, (err, found) => {
-			if (err) return callback(err, null);
-			if (found) return callback(_ecodes.REG_UNAME, null);
-			return callback(null, true);
-		});
-	});
+module.exports.registerEligible = async function(_opts, callback){
+	let found = await User.findOne({email: _opts.email})
+	if (found) throw _ecodes.REG_EMAIL;
+	found = await User.findOne({username: _opts.username})
+	if (found) throw _ecodes.REG_UNAME
 }
 
 module.exports.deleteUserByEmail = function(email, callback){
 	User.remove({email: email}, callback);
 }
 
-module.exports.updateUserById = function(uid, new_user, callback){
-	bcrypt.genSalt(10, (err, salt) => {
-		if (err) callback(err, null);
-		bcrypt.hash(new_user.password, salt, (err, hash) => {
-			if (err) callback(err, null);
-			new_user.password = hash;
-			User.update({_id: uid}, new_user, callback);
-		});
-	});
+module.exports.updateUserById = async function(uid, new_user, callback){
+	let salt = await bcrypt.genSalt(10)
+	let hash = await bcrypt.hash(new_user.password, salt)
+	new_user.password = hash;
+	await User.update({_id: uid}, new_user)
 }

@@ -1,136 +1,52 @@
 import jwt from 'jsonwebtoken';
 
-import {secret} from '../config/database';
-import {_EUNEXP} from '../util';
+import {secret} from '../config/db';
+import {bearer as CUSTOM_BEARER, use_jti as USE_JTI, jtiers_list} from '../config/auth';
+import {_EUNEXP, _FAIL, asyncWrap} from '../util';
 
 import User from '../models/user';
 
-const constants = {
-  U_UNREG: 'Unauthorized',
-  VALIDATE_UTYPE_ALL: 'all',
-  onunauth: {
-    VALIDATE_ONUNAUTH_ALLOW: 1,
-    VALIDATE_ONUNAUTH_DENY: 2,
-    DEF_VALIDATE_ONUNAUTH: 2
-  },
-  onhnd: {
-    VALIDATE_ONHND_ALLOW: 1,
-    VALIDATE_ONHND_DENY: 2,
-    DEF_VALIDATE_ONHND: 2
-  }
-}
-
-module.exports.v_onUnauth_A = constants.onunauth.VALIDATE_ONUNAUTH_ALLOW;
-module.exports.v_onUnauth_D = constants.onunauth.VALIDATE_ONUNAUTH_DENY;
-module.exports.v_onUnauth_Def = constants.onunauth.DEF_VALIDATE_ONUNAUTH;
-
-module.exports.v_onHnd_A = constants.onhnd.VALIDATE_ONHND_ALLOW;
-module.exports.v_onHnd_D = constants.onhnd.VALIDATE_ONHND_DENY;
-module.exports.v_onHnd_Def = constants.onhnd.DEF_VALIDATE_ONHND;
-
-module.exports.constants = constants;
-
-module.exports.jwtValidate = (options) => {
-  return function(req, res, next){
-    let opts;
-    if (typeof options == 'undefined') {
-      opts = {};
-    } else {
-      opts = Object.assign({}, options);
+module.exports.jwtValidate = (vc, vopt) => {
+  return asyncWrap(async function(req, res, next) {
+    if (typeof vc == 'undefined' || typeof vopt == 'undefined') {
+      return _FAIL(res, 'JV_INV_ARGS', 'JV');
     }
-
-    opts.utype = opts.utype || constants.VALIDATE_UTYPE_ALL;
-    opts.onunauth = opts.onunauth || constants.onunauth.DEF_VALIDATE_ONUNAUTH;
-    opts.onhnd = opts.onhnd || constants.onhnd.DEF_VALIDATE_ONHND;
-
     let bearer_token = req.headers.authorization;
-
     if (typeof bearer_token == 'undefined') {
-      if (opts.onhnd == constants.onhnd.VALIDATE_ONHND_DENY) {
-        return res.status(400).json({
-          success: false,
-          code: 'JWT_HEADER_ND',
-          middleware: 'jwtValidate'
-        });
-      } else if (opts.onhnd == constants.onhnd.VALIDATE_ONHND_ALLOW) {
-        req.user = constants.U_UNREG;
-        next();
-        return;
-      } else {
-        return res.status(500).json({
-          success: false,
-          msg: 'Internal error - Invalid opts.onunauth value: ' + opts.onunauth,
-          middleware: 'jwtValidate'
-        });
-      }
+      return _FAIL(res, 'JV_UNDEF_HEADER', 'JV');
     }
-
-    if (!bearer_token.startsWith('JWT ')) {
-      return res.status(400).json({
-        success: false,
-        code: 'JWT_INV_AUTH_TOKEN',
-        middleware: 'jwtValidate'
-      });
+    if (!bearer_token.startsWith(CUSTOM_BEARER)) {
+      return _FAIL(res, 'JV_INV_TOKEN', 'JV');
     }
-
-    jwt.verify(bearer_token.slice(4), secret, (err, decoded) => {
-      if (err) {
-        return res.status(400).json({
-          success: false,
-          code: 'E_JWT_VERIFY',
-          err: err,
-          debug: {
-            decoded: decoded
-          },
-          middleware: 'jwtValidate'
-        });
-      }
-      User.findById(decoded.id, {__v: 0, password: 0}, (err, found) => {
-        if (err) {
-          return _EUNEXP(res, err, {
-            found: found,
-            id: decoded.id
-          }, 'jwtValidate');
-        }
-        if (found) {
-          //if (typeof opts.utype != 'undefined') {
-          if (opts.utype != constants.VALIDATE_UTYPE_ALL) {
-            if (!opts.utype.includes(found.utype)) {
-              if (opts.onunauth == constants.onunauth.VALIDATE_ONUNAUTH_DENY) {
-                return res.status(401).json({
-                  success: false,
-                  code: 'Unauthorized user type',
-                  debug: {
-                    requirement: opts.utype,
-                    utype: found.utype,
-                    found: found
-                  },
-                  middleware: 'jwtValidate'
-                });
-              }
-              if (opts.onunauth != constants.onunauth.VALIDATE_ONUNAUTH_ALLOW) {
-                return res.status(500).json({
-                  success: false,
-                  msg: 'Internal error - Invalid opts.onunauth value: ' + opts.onunauth,
-                  middleware: 'jwtValidate'
-                });
-              }
+    let decoded = await jwt.verify(bearer_token.slice(CUSTOM_BEARER.length + 1), secret)
+    let found = await User.findById(decoded.id, {__v: 0, password: 0})
+    if (found) {
+      if (USE_JTI) {
+        if (jtiers_list.includes(found.position)) {
+          if (typeof decoded.jti != 'undefined') {
+            if (found._jti != decoded.jti) {
+              return _FAIL(res, 'JV_INV_JTI', 'JV');
             }
+          } else {
+            return _FAIL(res, 'JV_UNDEF_JTI', 'JV');
           }
-          req.user = found;
-          req.user.authorization = decoded.authorization;
-          next();
-        } else {
-          return res.status(401).json({
-            success: false,
-            code: 'U_NF',
-            debug: {
-              found: found
-            },
-            middleware: 'jwtValidate'
-          });
         }
-      });
-    });
-  }
+      }
+      switch (vc) {
+        case 'utype':
+          if (vopt.includes(found.position)) {
+            req.user = found;
+            console.log('[JV] +', found.name);
+            next();
+          } else {
+            return _FAIL(res, 'E_UNAUTH', 'JV');
+          }
+          break;
+        default:
+          return _FAIL(res, 'JV_INV_OPTS', 'JV');
+      }
+    } else {
+      return _FAIL(res, 'U_NF', 'JV');
+    }
+  })
 }
