@@ -60,7 +60,9 @@ mongoose.connect(db_config.database)
 			next();
 		});
 
-		app.use(jwtBind());
+		app.use(jwtBind({
+			logging: true
+		}));
 		app.use(rlog_mw);
 
 		// TODO: Implement this
@@ -89,7 +91,6 @@ mongoose.connect(db_config.database)
 			} else {
 				console.error('\x1b[1m\x1b[31m[ERROR]', err.name + '\x1b[0m');
 			}
-			console.log('[DEBUG] ERR:', err);
 			if (!res.headersSent) {
 				switch (err.name) {
 					case 'JsonWebTokenError':

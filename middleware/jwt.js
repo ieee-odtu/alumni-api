@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import bluebird from 'bluebird';
 
 import {secret} from '../config/database';
 import {bearer as CUSTOM_BEARER, use_jti as USE_JTI, jtiers_list} from '../config/auth';
@@ -6,7 +7,8 @@ import {_EUNEXP, _FAIL, asyncWrap} from '../util';
 
 import User from '../models/user';
 
-module.exports.jwtBind = () => {
+module.exports.jwtBind = (vopts) => {
+  let opts = Object.assign({}, vopts);
   return asyncWrap(async (req, res, next) => {
     let bearer_token = req.headers.authorization;
     if (typeof bearer_token == 'undefined') {
@@ -34,7 +36,9 @@ module.exports.jwtBind = () => {
         }
       }
       req.user = found;
-      console.log('\n\x1b[1m\x1b[33m[JB]\x1b[0m +', found.username)
+      if (opts.logging) {
+        console.log('\n\x1b[1m\x1b[34m[JB]\x1b[0m +', found.username);
+      }
       next();
     } else {
       next();
@@ -75,9 +79,9 @@ module.exports.jwtValidate = (vc, vopt) => {
             req.user = found;
 
             if (typeof User.ccodes[found.utype] != 'undefined') {
-              console.log('\x1b[33m[JV]\x1b[0m +', found.username, User.ccodes[found.utype] + '<' + found.utype + '>\x1b[0m');
+              console.log('\x1b[34m[JV]\x1b[0m +', found.username, User.ccodes[found.utype] + '<' + found.utype + '>\x1b[0m');
             } else {
-              console.log('\x1b[33m[JV]\x1b[0m +', found.username, '<' + found.utype + '>');
+              console.log('\x1b[34m[JV]\x1b[0m +', found.username, '<' + found.utype + '>');
             }
 
             next();
