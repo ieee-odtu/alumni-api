@@ -65,3 +65,7 @@ module.exports.createNew = async (new_reg) => {
 module.exports.getRegByName = function (name, callback) {
   Registry.findOne({name: name}, callback);
 }
+
+module.exports.authorized = (user) => {
+  return user._dbauth ? true : false;
+}

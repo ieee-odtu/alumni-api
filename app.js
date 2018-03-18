@@ -56,12 +56,14 @@ mongoose.connect(db_config.database)
 
 		// Changing the response header 'X-Powered-By' for security reasons
 		app.use((req, res, next) => {
-			res.set('X-Powered-By', 'IEEE METU');
+			res.set('X-Powered-By', 'IEEE METU | Computer Society');
 			next();
 		});
 
-		app.use(_jwt.jwtValidate({onhnd: _jwt.v_onHnd_A}));
 		app.use(rlog_mw);
+
+		// TODO: Implement this
+		//app.use(vRF_multi('all'));
 
 		app.get('/', (req, res, next) => {
 			return res.status(200).json({
@@ -71,9 +73,6 @@ mongoose.connect(db_config.database)
 				api_author: API_AUTHOR
 			});
 		});
-
-		// TODO: Implement this
-		//app.use(vRF_multi('all'));
 
 		app.use('/u', route_users);
 		app.use('/r', route_regs);
@@ -91,7 +90,7 @@ mongoose.connect(db_config.database)
 						res.status(401).json({
 							code: 'JV_ERR',
 							err: err,
-							middleware: 'jwtValidate'
+							middleware: 'JV'
 						});
 						break;
 					case 'CastError':

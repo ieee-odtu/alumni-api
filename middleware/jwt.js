@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-import {secret} from '../config/db';
+import {secret} from '../config/database';
 import {bearer as CUSTOM_BEARER, use_jti as USE_JTI, jtiers_list} from '../config/auth';
 import {_EUNEXP, _FAIL, asyncWrap} from '../util';
 

@@ -25,6 +25,12 @@ let UserSchema = mongoose.Schema({
 	},
 	signup: {
 		type: String
+	},
+	_dbauth: {
+		type: Boolean,
+		required: function () {
+			return this.utype == 'editor';
+		}
 	}
 });
 
