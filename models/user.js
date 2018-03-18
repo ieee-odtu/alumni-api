@@ -74,9 +74,17 @@ module.exports.registerEligible = async function(_opts, callback){
 	if (found) throw 'REG_UNAME';
 }
 
-module.exports.updateUserById = async function(uid, new_user, callback){
-	let salt = await bcrypt.genSalt(10)
-	let hash = await bcrypt.hash(new_user.password, salt)
-	new_user.password = hash;
+module.exports.updateUserById = async function(uid, _new_user, callback){
+	let new_user = Object.assign({}, _new_user);
+	let current = await User.findById(uid)
+	if (typeof new_user.password == 'undefined') {
+		new_user.password = current.password;
+	} else {
+		let salt = await bcrypt.genSalt(10)
+		let hash = await bcrypt.hash(new_user.password, salt)
+		new_user.password = hash;
+	}
+	new_user.email = current.email;
+	new_user.signup = current.signup;
 	await User.update({_id: uid}, new_user)
 }
