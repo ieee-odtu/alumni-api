@@ -8,7 +8,13 @@ import {jwtValidate} from '../middleware/jwt';
 import {_EUNEXP, _SUCC, _FAIL, _CREATED, _REMOVED, asyncWrap} from '../util';
 
 router.get('/', jwtValidate('utype', ['admin', 'editor']), asyncWrap(async (req, res, next) => {
-  let users = await User.find({}, {__v: 0, password: 0})
+  let query = {};
+  let filter = {__v: 0, password: 0};
+  if (req.user.utype != 'admin') {
+    query = {'utype': {$ne: 'admin'}};
+    filter = Object.assign({}, filter, {_id: 0, email: 0, _dbauth: 0, _jti: 0, signup: 0});
+  }
+  let users = await User.find(query, filter)
   if (users.length == 0) {
     return _FAIL(res, 'U_NF');
   } else {
@@ -34,11 +40,19 @@ router.post('/', jwtValidate('utype', ['admin']), asyncWrap(async (req, res, nex
 }));
 
 router.get('/:uid', jwtValidate('utype', ['admin', 'editor']), asyncWrap(async (req, res, next) => {
-  let found = await User.findById(req.params.uid, {__v: 0, password: 0})
+  let filter = {__v: 0, password: 0};
+  if (req.user.utype != 'admin') {
+    filter = Object.assign({}, filter, {_id: 0, email: 0, _dbauth: 0, _jti: 0, signup: 0});
+  }
+  let found = await User.findById(req.params.uid, filter)
   if (found) {
-    return _SUCC(res, {
-      user: found
-    });
+    if (req.user.utype != 'admin' && found.utype == 'admin') {
+      return _FAIL(res, 'U_NF');
+    } else {
+      return _SUCC(res, {
+        user: found
+      });
+    }
   } else {
     return _FAIL(res, 'U_NF');
   }

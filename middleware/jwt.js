@@ -34,7 +34,7 @@ module.exports.jwtBind = () => {
         }
       }
       req.user = found;
-      console.log('\x1b[1m\x1b[33m[JB]\x1b[0m +', found.username)
+      console.log('\n\x1b[1m\x1b[33m[JB]\x1b[0m +', found.username)
       next();
     } else {
       next();

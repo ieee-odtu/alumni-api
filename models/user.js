@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+import {use_jti as USE_JTI} from '../config/auth';
+import {_generate_jti} from '../util';
+
 const USER_UTYPES = ['admin', 'editor', 'regular'];
 
 let UserSchema = mongoose.Schema({
@@ -29,6 +32,12 @@ let UserSchema = mongoose.Schema({
 		required: function () {
 			return this.utype == 'editor';
 		}
+	},
+	_jti: {
+		type: String,
+		required: function () {
+			return (USE_JTI && ['admin', 'editor'].includes(this.utype));
+		}
 	}
 });
 
@@ -52,6 +61,9 @@ module.exports.createNew = async function(_new_user, callback){
 	new_user.email = new_user.email.toLowerCase();
 	new_user.signup = new Date().toJSON();
 	new_user._dbauth = new_user.utype == 'editor' ? (new_user._dbauth || false) : false;
+	if (USE_JTI && ['admin', 'editor'].includes(new_user.utype)) {
+		new_user._jti = _generate_jti();
+	}
 	await new_user.save();
 }
 
