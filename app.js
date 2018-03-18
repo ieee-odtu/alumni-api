@@ -9,14 +9,14 @@ import helmet from 'helmet';
 import db_config from './config/database';
 import server_config from './config/server';
 
-import _jwt from './middleware/jwt';
+import {jwtBind} from './middleware/jwt';
 import {vRF_multi} from './middleware/validate';
 
 import route_users from './routes/users';
 import route_regs from './routes/registries';
 import route_auth from './routes/auth';
 
-import {rlog_mw, _EUNEXP} from './util';
+import {rlog_mw, _EUNEXP, _ERR} from './util';
 
 const package_json_parsed = JSON.parse(fs.readFileSync('package.json'));
 const API_NAME = package_json_parsed.name;
@@ -60,6 +60,7 @@ mongoose.connect(db_config.database)
 			next();
 		});
 
+		app.use(jwtBind());
 		app.use(rlog_mw);
 
 		// TODO: Implement this
@@ -83,7 +84,12 @@ mongoose.connect(db_config.database)
 		});
 
 		app.use((err, req, res, next) => {
-			console.error('\x1b[1m\x1b[31m[ERROR]', err.name + '\x1b[0m');
+			if (typeof err.name == 'undefined' && typeof err == 'string') {
+				console.error('\x1b[1m\x1b[31m[ERROR] <code>', err + '\x1b[0m');
+			} else {
+				console.error('\x1b[1m\x1b[31m[ERROR]', err.name + '\x1b[0m');
+			}
+			console.log('[DEBUG] ERR:', err);
 			if (!res.headersSent) {
 				switch (err.name) {
 					case 'JsonWebTokenError':
@@ -100,7 +106,7 @@ mongoose.connect(db_config.database)
 						});
 						break;
 					default:
-						_EUNEXP(res, err);
+						_ERR(res, err);
 				}
 			}
 		});

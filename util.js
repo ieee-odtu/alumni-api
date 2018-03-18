@@ -33,7 +33,7 @@ function _EUNEXP(res, err, debug, middleware) {
 module.exports._EUNEXP = _EUNEXP;
 
 module.exports._ERR = (res, err, debug, middleware) => {
-  if (errcodes.includes(err)) {
+  if (typeof errcodes[err] != 'undefined') {
     let response = {
       code: err
     }

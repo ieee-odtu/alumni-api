@@ -62,10 +62,13 @@ module.exports.createNew = async (new_reg) => {
   await new_instance.save();
 }
 
-module.exports.getRegByName = function (name, callback) {
-  Registry.findOne({name: name}, callback);
-}
-
 module.exports.authorized = (user) => {
-  return user._dbauth ? true : false;
+  if (typeof user == 'undefined') {
+    return false;
+  }
+  if (user.utype == 'admin') {
+    return true;
+  } else {
+    return user._dbauth ? true : false;
+  }
 }

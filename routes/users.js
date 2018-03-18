@@ -62,7 +62,7 @@ router.post('/register', asyncWrap(async (req, res, next) => {
     username: req.body.user.username
   })
   req.body.user.utype = 'regular';
-  await User.addUser(req.body.user)
+  await User.createNew(req.body.user)
   return _CREATED(res, 'User');
 }));
 

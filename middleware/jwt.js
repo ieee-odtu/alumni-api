@@ -6,6 +6,43 @@ import {_EUNEXP, _FAIL, asyncWrap} from '../util';
 
 import User from '../models/user';
 
+module.exports.jwtBind = () => {
+  return asyncWrap(async (req, res, next) => {
+    let bearer_token = req.headers.authorization;
+    if (typeof bearer_token == 'undefined') {
+      next();
+      return false;
+    }
+    if (!bearer_token.startsWith(CUSTOM_BEARER)) {
+      next();
+      return false;
+    }
+    let decoded = await jwt.verify(bearer_token.slice(CUSTOM_BEARER.length + 1), secret)
+    let found = await User.findById(decoded.id, {__v: 0, password: 0})
+    if (found) {
+      if (USE_JTI) {
+        if (jtiers_list.includes(found.utype)) {
+          if (typeof decoded.jti != 'undefined') {
+            if (found._jti != decoded.jti) {
+              next();
+              return false;
+            }
+          } else {
+            next();
+            return false;
+          }
+        }
+      }
+      req.user = found;
+      console.log('\x1b[1m\x1b[33m[JB]\x1b[0m +', found.username)
+      next();
+    } else {
+      next();
+      return false;
+    }
+  })
+}
+
 module.exports.jwtValidate = (vc, vopt) => {
   return asyncWrap(async function(req, res, next) {
     if (typeof vc == 'undefined' || typeof vopt == 'undefined') {
@@ -22,7 +59,7 @@ module.exports.jwtValidate = (vc, vopt) => {
     let found = await User.findById(decoded.id, {__v: 0, password: 0})
     if (found) {
       if (USE_JTI) {
-        if (jtiers_list.includes(found.position)) {
+        if (jtiers_list.includes(found.utype)) {
           if (typeof decoded.jti != 'undefined') {
             if (found._jti != decoded.jti) {
               return _FAIL(res, 'JV_INV_JTI', 'JV');
@@ -34,9 +71,15 @@ module.exports.jwtValidate = (vc, vopt) => {
       }
       switch (vc) {
         case 'utype':
-          if (vopt.includes(found.position)) {
+          if (vopt.includes(found.utype)) {
             req.user = found;
-            console.log('[JV] +', found.name);
+
+            if (typeof User.ccodes[found.utype] != 'undefined') {
+              console.log('\x1b[33m[JV]\x1b[0m +', found.username, User.ccodes[found.utype] + '<' + found.utype + '>\x1b[0m');
+            } else {
+              console.log('\x1b[33m[JV]\x1b[0m +', found.username, '<' + found.utype + '>');
+            }
+
             next();
           } else {
             return _FAIL(res, 'E_UNAUTH', 'JV');

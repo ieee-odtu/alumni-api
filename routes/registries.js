@@ -7,15 +7,18 @@ import {jwtValidate} from '../middleware/jwt';
 
 import {_EUNEXP, _FAIL, _SUCC, _CREATED, _REMOVED, asyncWrap} from '../util';
 
-
 router.get('/', asyncWrap(async (req, res, next) => {
-  let regs = await Reg.find({}, {_id: 0, __v: 0})
+  let user_authorized = Reg.authorized(req.user)
+  let filter_opts;
+  if (user_authorized) {
+    filter_opts = {_id: 0, __v: 0, 'positions._id': 0, 'contact._id': 0};
+  } else {
+    filter_opts = {_id: 0, __v: 0, 'contact.phone': 0, 'contact.email': 0, 'contact.city': 0};
+  }
+  let regs = await Reg.find({}, filter_opts)
   if (regs.length == 0) {
     return _FAIL(res, 'R_NF');
   } else {
-    if (! await Reg.authorized(req.user)) {
-      regs = regs.select('-contact.phone -contact.email -contact.city');
-    }
     return _SUCC(res, {
       registries: regs
     });
@@ -23,7 +26,7 @@ router.get('/', asyncWrap(async (req, res, next) => {
 }));
 
 router.post('/', jwtValidate('utype', ['admin', 'editor']), asyncWrap(async (req, res, next) => {
-  let found = await Reg.getRegByName(req.body.reg.name)
+  let found = await Reg.findOne({name: req.body.reg.name})
   if (found) {
     return _FAIL(res, 'REG_NAME');
   } else {
@@ -33,13 +36,17 @@ router.post('/', jwtValidate('utype', ['admin', 'editor']), asyncWrap(async (req
 }));
 
 router.get('/:rid', asyncWrap(async (req, res, next) => {
-  let found = await Reg.findById(req.params.rid, {_id: 0, __v: 0})
-  if (found) {
-    if (! await Reg.authorized(req.user)) {
-      regs = regs.select('-contact.phone -contact.email -contact.city');
-    }
+  let user_authorized = Reg.authorized(req.user)
+  let filter_opts;
+  if (user_authorized) {
+    filter_opts = {_id: 0, __v: 0};
+  } else {
+    filter_opts = {_id: 0, __v: 0, 'contact.phone': 0, 'contact.email': 0, 'contact.city': 0};
+  }
+  let regs = await Reg.findById(req.params.rid, filter_opts)
+  if (regs) {
     return _SUCC(res, {
-      registry: found
+      registry: regs
     });
   } else {
     return _FAIL(res, 'R_NF');

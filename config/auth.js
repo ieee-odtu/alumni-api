@@ -1,5 +1,5 @@
 module.exports = {
     bearer: 'IEEE-CS',
-    use_jti: true,
-    jtiers_list: ['admin', 'staff']
+    use_jti: false,
+    jtiers_list: ['admin', 'editor']
 }

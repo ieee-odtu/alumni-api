@@ -1,8 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-import _ecodes from '../config/ec';
-
 const USER_UTYPES = ['admin', 'editor', 'regular'];
 
 let UserSchema = mongoose.Schema({
@@ -53,6 +51,7 @@ module.exports.createNew = async function(_new_user, callback){
 	new_user.password = hash;
 	new_user.email = new_user.email.toLowerCase();
 	new_user.signup = new Date().toJSON();
+	new_user._dbauth = new_user.utype == 'editor' ? (new_user._dbauth || false) : false;
 	await new_user.save();
 }
 
@@ -71,9 +70,9 @@ module.exports.getUsersByUtype = function(utype, callback){
 
 module.exports.registerEligible = async function(_opts, callback){
 	let found = await User.findOne({email: _opts.email})
-	if (found) throw _ecodes.REG_EMAIL;
+	if (found) throw 'REG_EMAIL';
 	found = await User.findOne({username: _opts.username})
-	if (found) throw _ecodes.REG_UNAME
+	if (found) throw 'REG_UNAME';
 }
 
 module.exports.deleteUserByEmail = function(email, callback){
