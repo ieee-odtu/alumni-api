@@ -13,7 +13,7 @@ router.get('/', asyncWrap(async (req, res, next) => {
   if (user_authorized) {
     filter_opts = {_id: 0, __v: 0, 'positions._id': 0, 'contact._id': 0};
   } else {
-    filter_opts = {_id: 0, __v: 0, 'contact.phone': 0, 'contact.email': 0, 'contact.city': 0};
+    filter_opts = {_id: 0, __v: 0, 'contact.phone': 0, 'contact.email': 0, 'contact.city': 0, 'positions._id': 0, 'contact._id': 0};
   }
   let regs = await Reg.find({}, filter_opts)
   if (regs.length == 0) {
@@ -39,9 +39,9 @@ router.get('/:rid', asyncWrap(async (req, res, next) => {
   let user_authorized = Reg.authorized(req.user)
   let filter_opts;
   if (user_authorized) {
-    filter_opts = {_id: 0, __v: 0};
+    filter_opts = {_id: 0, __v: 0, 'positions._id': 0, 'contact._id': 0};
   } else {
-    filter_opts = {_id: 0, __v: 0, 'contact.phone': 0, 'contact.email': 0, 'contact.city': 0};
+    filter_opts = {_id: 0, __v: 0, 'contact.phone': 0, 'contact.email': 0, 'contact.city': 0, 'positions._id': 0, 'contact._id': 0};
   }
   let regs = await Reg.findById(req.params.rid, filter_opts)
   if (regs) {
