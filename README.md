@@ -22,7 +22,7 @@ if (['POST', 'PUT', 'PATCH'].includes(this.req.method)) {
 }
 ```
 
-And add the lines below right before the last return statement in express/lib/response.js
+And add the lines below right before the last return statement in express/lib/response.js at function res.json
 
 ```js
 function __colorify_status(s) {
