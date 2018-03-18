@@ -59,7 +59,7 @@ router.get('/:uid', jwtValidate('utype', ['admin', 'editor']), asyncWrap(async (
 }));
 
 router.put('/:uid', jwtValidate('utype', ['admin']), asyncWrap(async (req, res, next) => {
-    let updated = await User.update(req.params.uid, req.body.user)
+    let updated = await User.updateUserById(req.params.uid, req.body.user)
     return _CREATED(res, 'User', {
       updated: updated
     });

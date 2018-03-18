@@ -67,28 +67,11 @@ module.exports.createNew = async function(_new_user, callback){
 	await new_user.save();
 }
 
-module.exports.getUserByUsername = function(uname, callback){
-	User.findOne({username: uname}, callback);
-}
-
-module.exports.getUserByEmail = function(email, callback){
-	User.findOne({email: email}, callback);
-}
-
-module.exports.getUsersByUtype = function(utype, callback){
-	if (!USER_UTYPES.includes(utype)) return callback(_ecodes.USER_WRONG_UTYPE, null);
-	User.find({utype: utype}, callback);
-}
-
 module.exports.registerEligible = async function(_opts, callback){
 	let found = await User.findOne({email: _opts.email})
 	if (found) throw 'REG_EMAIL';
 	found = await User.findOne({username: _opts.username})
 	if (found) throw 'REG_UNAME';
-}
-
-module.exports.deleteUserByEmail = function(email, callback){
-	User.remove({email: email}, callback);
 }
 
 module.exports.updateUserById = async function(uid, new_user, callback){
