@@ -78,3 +78,7 @@ module.exports = {
     stat: 401
   }
 }
+
+module.exports.middleware_specific = {
+  'JV': 401
+}

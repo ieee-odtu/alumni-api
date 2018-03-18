@@ -60,6 +60,10 @@ mongoose.connect(db_config.database)
 			next();
 		});
 
+		app.use((req, res, next) => {
+			console.log('\n[==>] Request from \x1b[45m\x1b[37m\x1b[1m' + (['127.0.0.1', '::1'].includes(req.ip) ? 'localhost' : req.ip )+ '\x1b[0m at \x1b[4m' + new Date().toJSON() + '\x1b[0m');
+			next();
+		});
 		app.use(jwtBind({
 			logging: true
 		}));
@@ -91,6 +95,7 @@ mongoose.connect(db_config.database)
 			} else {
 				console.error('\x1b[1m\x1b[31m[ERROR]', err.name + '\x1b[0m');
 			}
+			//console.log('[DEBUG] ERR:', err);
 			if (!res.headersSent) {
 				switch (err.name) {
 					case 'JsonWebTokenError':

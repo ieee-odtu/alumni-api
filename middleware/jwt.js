@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import bluebird from 'bluebird';
+import JsonWebTokenError from 'jsonwebtoken/lib/JsonWebTokenError';
 
 import {secret} from '../config/database';
 import {bearer as CUSTOM_BEARER, use_jti as USE_JTI, jtiers_list} from '../config/auth';
@@ -19,7 +19,13 @@ module.exports.jwtBind = (vopts) => {
       next();
       return false;
     }
-    let decoded = await jwt.verify(bearer_token.slice(CUSTOM_BEARER.length + 1), secret)
+    let decoded;
+    try {
+      decoded = await jwt.verify(bearer_token.slice(CUSTOM_BEARER.length + 1), secret)
+    } catch (e) {
+      throw new JsonWebTokenError('corrupt token');
+      return false;
+    }
     let found = await User.findById(decoded.id, {__v: 0, password: 0})
     if (found) {
       if (USE_JTI) {
@@ -37,7 +43,7 @@ module.exports.jwtBind = (vopts) => {
       }
       req.user = found;
       if (opts.logging) {
-        console.log('\n\x1b[1m\x1b[34m[JB]\x1b[0m +', found.username);
+        console.log('\x1b[1m\x1b[34m[JB]\x1b[0m +', found.username);
       }
       next();
     } else {
@@ -59,7 +65,13 @@ module.exports.jwtValidate = (vc, vopt) => {
     if (!bearer_token.startsWith(CUSTOM_BEARER)) {
       return _FAIL(res, 'JV_INV_TOKEN', 'JV');
     }
-    let decoded = await jwt.verify(bearer_token.slice(CUSTOM_BEARER.length + 1), secret)
+    let decoded;
+    try {
+      decoded = await jwt.verify(bearer_token.slice(CUSTOM_BEARER.length + 1), secret)
+    } catch (e) {
+      throw new JsonWebTokenError('corrupt token');
+      return false;
+    }
     let found = await User.findById(decoded.id, {__v: 0, password: 0})
     if (found) {
       if (USE_JTI) {

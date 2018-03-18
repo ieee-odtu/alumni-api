@@ -59,6 +59,9 @@ router.get('/:uid', jwtValidate('utype', ['admin', 'editor']), asyncWrap(async (
 }));
 
 router.put('/:uid', jwtValidate('utype', ['admin']), asyncWrap(async (req, res, next) => {
+    if (! await User.findById(req.params.uid)) {
+      return _FAIL(res, 'U_NF');
+    }
     let updated = await User.updateUserById(req.params.uid, req.body.user)
     return _CREATED(res, 'User', {
       updated: updated
@@ -66,6 +69,9 @@ router.put('/:uid', jwtValidate('utype', ['admin']), asyncWrap(async (req, res, 
 }));
 
 router.delete('/:uid', jwtValidate('utype', ['admin']), asyncWrap(async (req, res, next) => {
+  if (! await User.findById(req.params.uid)) {
+    return _FAIL(res, 'U_NF');
+  }
   await User.remove({_id: req.params.uid})
   return _REMOVED(res, 'User');
 }));

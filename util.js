@@ -6,7 +6,10 @@ import {use_response_success} from './config/server';
 
 import User from './models/user';
 
-function get_status_or_500(code) {
+function get_status_or_500(code, middleware) {
+  if (typeof middleware != 'undefined' && typeof errcodes.middleware_specific[middleware] != 'undefined') {
+    return errcodes.middleware_specific[middleware];
+  }
   return (typeof errcodes[code] != 'undefined') ? errcodes[code].stat : 500;
 }
 
@@ -46,7 +49,7 @@ module.exports._ERR = (res, err, debug, middleware) => {
       response['debug'] = debug;
       response['middleware'] = middleware;
     }
-    return res.status(get_status_or_500(err)).json(response);
+    return res.status(get_status_or_500(err, middleware)).json(response);
   } else {
     return _EUNEXP(res, err, debug, middleware);
   }
@@ -117,7 +120,7 @@ module.exports._FAIL = (res, code, middleware) => {
   if (typeof middleware != 'undefined') {
     response['middleware'] = middleware;
   }
-  return res.status(get_status_or_500(code)).json(response);
+  return res.status(get_status_or_500(code, middleware)).json(response);
 }
 
 module.exports._generate_jti = () => {

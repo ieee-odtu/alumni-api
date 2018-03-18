@@ -22,6 +22,26 @@ if (['POST', 'PUT', 'PATCH'].includes(this.req.method)) {
 }
 ```
 
+And add the lines below right before the last return statement in express/lib/response.js
+
+```js
+function __colorify_status(s) {
+  if (s >= 200 && s < 300) {
+    return '\x1b[32m' + s + '\x1b[0m';
+  } else if (s >= 300 && s < 400) {
+    return '\x1b[33m' + s + '\x1b[0m';
+  } else if (s >= 400 && s < 500) {
+    return '\x1b[1m\x1b[31m' + s + '\x1b[0m';
+  } else if (s >= 500) {
+    return '\x1b[41m' + s + '\x1b[0m';
+  } else {
+    return s;
+  }
+}
+
+console.log('[<==] Response:', __colorify_status(this.statusCode), '(' + body.length + ' B)')
+```
+
 <hr></hr>
 
 **This repository is part of IEEE METU CS Alumni Project and has been licensed under The MIT License.**
